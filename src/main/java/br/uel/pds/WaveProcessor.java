@@ -92,6 +92,7 @@ public class WaveProcessor {
 
         h.setSubChunk2Size(length);
         h.setByteRate(h.getSampleRate() * h.getNumChannels() * (h.getBitsPerSample()/8));
+        h.setChunkSize(36+length);
         outputFile.seek(0);
         outputFile.write(h.getRawHeader());
         outputFile.close();
