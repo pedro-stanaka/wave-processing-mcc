@@ -236,4 +236,10 @@ public class WaveHeader {
     public void setSubChunk2Size(int subChunk2Size) {
         this.subChunk2Size = subChunk2Size;
     }
+
+    public void setChunkSize(int chunkSize) {
+        this.chunkSize = chunkSize;
+        byte[] b = EndianessConverter.convertBigEndian(bitsPerSample,2);
+        System.arraycopy(b, 0, rawHeader, 34, b.length);
+    }
 }

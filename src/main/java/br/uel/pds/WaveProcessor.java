@@ -24,13 +24,13 @@ public class WaveProcessor {
         String original = "/25_4100_16_mono.wav";
 //        String original = "/25_8000_8_mono.wav";
 //        String original = "/i_see_fire.wav";
-        String output = "edited.wav";
 
         wave = new Wave(original);
 //        volumeChange(0.5, "ed_fade_"+original.substring(1));
 //        downSample(output, 2);
+        fadeEfx(5, "ed_fade_" + original.substring(1));
 //        getWaveFormat(original);
-        fadeEfx(3, "ed_fade_" + original.substring(1));
+
     }
 
     private static void getWaveFormat(String filename) {
@@ -89,7 +89,9 @@ public class WaveProcessor {
                 aux = 0;
             }
         }
+
         h.setSubChunk2Size(length);
+        h.setByteRate(h.getSampleRate() * h.getNumChannels() * (h.getBitsPerSample()/8));
         outputFile.seek(0);
         outputFile.write(h.getRawHeader());
         outputFile.close();
