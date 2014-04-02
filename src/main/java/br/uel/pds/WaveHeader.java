@@ -123,9 +123,6 @@ public class WaveHeader {
 
         if(isDebug()) {
             System.out.println("Bits per sample: " + EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawHeader, 34, 36)));
-            for (int i = 34; i < 36; i++) {
-                System.out.println(rawHeader[i]);
-            }
         }
         this.bitsPerSample = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawHeader, 34, 36));
 
