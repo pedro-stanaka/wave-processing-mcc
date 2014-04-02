@@ -30,10 +30,18 @@ public class ChartCreator {
     public void addValues(byte[] values){
         int cont=0;
         for (byte i : values) {
-            this.dataSet.add((double) i, (double) cont);
+            this.dataSet.add((double) cont, (double) i);
             cont++;
         }
         System.out.println("end chart add");
+    }
+
+    public void addValues(List<Integer> list){
+        int cont=0;
+        for(Integer i : list){
+            this.dataSet.add(cont, i);
+            cont++;
+        }
     }
 
     public int createChart(String chartTitle, String xTitle, String yTitle){

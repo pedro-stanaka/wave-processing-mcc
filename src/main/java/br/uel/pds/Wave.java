@@ -25,13 +25,9 @@ public class Wave {
 
         try {
             InputStream is = this.getClass().getResourceAsStream(fileName);
-            if(is.markSupported()){
-                is.mark(0);
-            }
             this.header = new WaveHeader(is);
             this.dataValues = new ArrayList<Integer>();
-            this.rawData = new byte[is.available()];
-            System.out.println(is.available());
+            this.rawData = new byte[header.getSubChunk2Size()];
             is.read(rawData);
             this.readData();
             is.close();
