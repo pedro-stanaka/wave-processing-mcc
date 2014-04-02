@@ -9,18 +9,20 @@ import java.util.List;
 
 
 /**
+ * This class abstract an wave file. Load the from resources folder inside maven project.
  *
  * @author Pedro Tanaka
  */
 public class Wave {
 
-
     private WaveHeader header;
     private byte[] rawData;
     private List<Integer> dataValues;
 
-
-
+    /**
+     * @TODO documentation here
+     * @param fileName
+     */
     public Wave(String fileName) {
 
         try {
@@ -36,20 +38,25 @@ public class Wave {
         }
     }
 
+    /**
+     * @TODO documentation here
+     */
     private void readData() {
         if(this.header.getBitsPerSample() == 16){
-//            if (this.header.getBlockAlign() == 2){
+            if (this.header.getBlockAlign() == 2){
                 this._readData32bits();
-//            }else {
-//                this._readData16bits();
-//            }
+            }else {
+                this._readData16bits();
+            }
         }else{
             this._readData8bits();
         }
     }
 
+    /**
+     * @TODO documentation here
+     */
     private void _readData32bits() {
-        System.out.println("32 read");
         int unsigned;
         for(int i=0; i< this.rawData.length;i+=4) {
             unsigned = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawData, i, i+4));
@@ -57,6 +64,9 @@ public class Wave {
         }
     }
 
+    /**
+     * @TODO documentation here
+     */
     private void _readData16bits(){
         int unsigned;
         for(int i=0; i< this.rawData.length;i+=2) {
@@ -65,24 +75,37 @@ public class Wave {
         }
     }
 
+    /**
+     * @TODO documentation here
+     */
     private void _readData8bits() {
-
         int unsigned;
         for(int i=0; i< this.rawData.length; i++) {
             unsigned =  rawData[i] & 0xFF;
             this.dataValues.add(unsigned);
         }
-
     }
 
+    /**
+     * @TODO documentation here
+     * @return
+     */
     public byte[] getRawData() {
         return rawData;
     }
 
+    /**
+     * @TODO documentation here
+     * @return
+     */
     public List<Integer> getDataValues() {
         return dataValues;
     }
 
+    /**
+     * @TODO documentation here
+     * @return
+     */
     public WaveHeader getHeader() {
         return header;
     }

@@ -25,12 +25,13 @@ public class EndianessConverter {
     /**
      * Convert an bigEndian int to an byte array little endian representation.
      * @param bigEndian An four byte array
+     * @param arrayLength The length of the result array
      * @return
      */
-    public static byte[] convertBigEndian(int bigEndian){
+    public static byte[] convertBigEndian(int bigEndian, int arrayLength){
         if (bigEndian != 0){
-            byte[] resp = new byte[4];
-            for (int i = 0; i < 4; i++) {
+            byte[] resp = new byte[arrayLength];
+            for (int i = 0; i < arrayLength; i++) {
                 resp[i] = (byte) (bigEndian >> (8*i));
             }
             return resp;

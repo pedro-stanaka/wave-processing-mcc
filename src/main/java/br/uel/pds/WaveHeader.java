@@ -4,10 +4,12 @@ import br.uel.pds.utils.EndianessConverter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
- * Created by pedro on 28/03/14.
+ *
  */
 public class WaveHeader {
 
@@ -121,6 +123,9 @@ public class WaveHeader {
 
         if(isDebug()) {
             System.out.println("Bits per sample: " + EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawHeader, 34, 36)));
+            for (int i = 34; i < 36; i++) {
+                System.out.println(rawHeader[i]);
+            }
         }
         this.bitsPerSample = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawHeader, 34, 36));
 
@@ -143,8 +148,8 @@ public class WaveHeader {
         sb.append(getChunkSize());
         sb.append(getChunkSize());
         sb.append(getFormat());
-        sb.append(getSubchunk1ID());
-        sb.append(getSubchunk1Size());
+        sb.append(getSubChunk1ID());
+        sb.append(getSubChunk1Size());
         sb.append(getAudioFormat());
         sb.append(getNumChannels());
         sb.append(getSampleRate());
@@ -155,8 +160,6 @@ public class WaveHeader {
         return null;
     }
 
-
-
     public String getChunkID() {
         return chunkID;
     }
@@ -165,16 +168,15 @@ public class WaveHeader {
         return chunkSize;
     }
 
-
     public String getFormat() {
         return format;
     }
 
-    public String getSubchunk1ID() {
+    public String getSubChunk1ID() {
         return Subchunk1ID;
     }
 
-    public int getSubchunk1Size() {
+    public int getSubChunk1Size() {
         return Subchunk1Size;
     }
 
@@ -214,5 +216,27 @@ public class WaveHeader {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public void setSampleRate(int sampleRate) {
+        SampleRate = sampleRate;
+        byte[] b = EndianessConverter.convertBigEndian(sampleRate,4);
+        System.arraycopy(b, 0, rawHeader, 24, b.length);
+    }
+
+    public void setByteRate(int byteRate) {
+        this.byteRate = byteRate;
+        byte[] b = EndianessConverter.convertBigEndian(byteRate,4);
+        System.arraycopy(b, 0, rawHeader, 28, b.length);
+    }
+
+    public void setBitsPerSample(int bitsPerSample) {
+        this.bitsPerSample = bitsPerSample;
+        byte[] b = EndianessConverter.convertBigEndian(bitsPerSample,2);
+        System.arraycopy(b, 0, rawHeader, 34, b.length);
+    }
+
+    public void setSubChunk2Size(int subChunk2Size) {
+        this.subChunk2Size = subChunk2Size;
     }
 }
