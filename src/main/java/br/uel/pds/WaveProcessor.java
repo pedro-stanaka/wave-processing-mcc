@@ -38,9 +38,9 @@ public class WaveProcessor {
         OutputStream os = new FileOutputStream(outputFileName);
         os.write(wave.getHeader().getRawHeader());
         for (int i = 0; i < wave.getRawData().length; i++) {
-            byte b = (byte) (wave.getRawData()[i] * factor);
-            os.write(b);
+            wave.getRawData()[i] = (byte) (wave.getRawData()[i] * factor);
         }
+        os.write(wave.getRawData());
         os.close();
     }
 
