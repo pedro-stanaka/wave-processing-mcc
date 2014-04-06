@@ -109,4 +109,8 @@ public class Wave {
     public WaveHeader getHeader() {
         return header;
     }
+
+    public void setHeader(WaveHeader header) {
+        this.header = header;
+    }
 }

@@ -3,9 +3,9 @@ package br.uel.pds;
 import br.uel.pds.utils.ChartCreator;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.Collections;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -14,100 +14,58 @@ public class WaveProcessor {
 
     private static Wave wave;
     private final static String OUT_FOLDER = "src/main/resources/";
-    /**
-     *
-     * @param args
-     * @throws IOException
-     */
-    public static void main(String[] args) throws IOException {
 
-        String original = "/25_4100_16_mono.wav";
-//        String original = "/25_8000_8_mono.wav";
-//        String original = "/i_see_fire.wav";
-
-        wave = new Wave(original);
-//        volumeChange(0.5, "ed_fade_"+original.substring(1));
-//        downSample(output, 2);
-        fadeEfx(5, "ed_fade_" + original.substring(1));
-//        getWaveFormat(original);
-
+    public WaveProcessor(String originalFile) {
+        this.wave = new Wave(originalFile);
     }
 
-    private static void getWaveFormat(String filename) {
+    public WaveProcessor getWaveFormat(String filename) {
         ChartCreator cc = new ChartCreator("Wave");
         cc.addValues(wave.getDataValues());
-        cc.createChart("Wave: " + filename, "Sample #", "Amplitude");
+        cc.createLineChart("Wave: " + filename, "Sample #", "Amplitude");
+        return this;
     }
 
 
     /**
-     *
      * @param factor
-     * @param outputFileName
      * @throws IOException
      */
-    private static void volumeChange(double factor, String outputFileName) throws IOException {
-
-        File f = new File(OUT_FOLDER+outputFileName);
-        if(f.exists()) f.delete();
-
-        OutputStream os = new FileOutputStream(OUT_FOLDER+outputFileName);
-        os.write(wave.getHeader().getRawHeader());
+    public WaveProcessor volumeChange(double factor) throws IOException {
         for (int i = 0; i < wave.getRawData().length; i++) {
             wave.getRawData()[i] = (byte) (wave.getRawData()[i] * factor);
         }
-        os.write(wave.getRawData());
-        os.close();
+        return this;
     }
 
     // Resample 25_8000_8_mono.wav in order to reduce its size to 1mb
     /**
      * @TODO documentation here
      * @todo Create an alternative way to downsample in order to avoid aliasing
-     * @param outputFileName The name of the file that will be written
      * @param samplingFactor An positive integer greater than one. Should not be very big, otherwise aliasing
-     *                       can occur in downsampling process
+     * @return WaveProcessor The instance of this class (this).
      */
-    private static void downSample(String outputFileName, int samplingFactor) throws IOException {
-        RandomAccessFile outputFile = new RandomAccessFile(OUT_FOLDER+outputFileName, "rw");
-
-        int length = 0, aux = 0;
+    private WaveProcessor downSample(int samplingFactor) throws IOException {
         WaveHeader h = wave.getHeader();
-        byte[] temp = new byte[512];
 
-        h.setSampleRate(wave.getHeader().getSampleRate()/samplingFactor);
+        h.setSampleRate(wave.getHeader().getSampleRate() / samplingFactor);
         h.setSubChunk2Size(wave.getHeader().getSubChunk2Size()/samplingFactor);
 
-
-        outputFile.write(h.getRawHeader());
+        List<Byte> byteOut = new ArrayList<Byte>();
         for (int i = 0; i < wave.getRawData().length; i+=samplingFactor) {
-            length++;
-            temp[aux++] = wave.getRawData()[i];
-            if(aux == 511){
-                System.out.println("pos: " + aux + " ## len: " + length);
-                outputFile.write(temp);
-                aux = 0;
-            }
+            byteOut.add(wave.getRawData()[i]);
         }
 
-        h.setSubChunk2Size(length);
+        h.setSubChunk2Size(byteOut.size());
         h.setByteRate(h.getSampleRate() * h.getNumChannels() * (h.getBitsPerSample()/8));
-        h.setChunkSize(36+length);
-        outputFile.seek(0);
-        outputFile.write(h.getRawHeader());
-        outputFile.close();
+        h.setChunkSize(36+byteOut.size());
+        wave.setHeader(h);
+        return this;
     }
 
     // Apply fadeIn fadeOut in 25_4100_16_mono.wav
-    private static void fadeEfx(int sec, String outputFileName) throws IOException {
+    private WaveProcessor fadeEfx(int sec) throws IOException {
         int numberOfSamples = wave.getHeader().getByteRate() * sec;
-        System.out.println(numberOfSamples);
-
-        File f = new File(OUT_FOLDER+outputFileName);
-        if(f.exists()) f.delete();
-
-        OutputStream os = new FileOutputStream(OUT_FOLDER+outputFileName);
-        os.write(wave.getHeader().getRawHeader());
 
         double factor = 0, step = 1.0/(double)sec;
         // fade in
@@ -117,17 +75,29 @@ public class WaveProcessor {
 
         }
 
+        // fade out
         factor = 1;
         for (int i = (wave.getRawData().length - numberOfSamples); i < wave.getRawData().length; i++) {
             wave.getRawData()[i] = (byte) (wave.getRawData()[i] * factor);
             if(i% (wave.getHeader().getByteRate()) == 0) factor -= step;
         }
-        os.write(wave.getRawData());
-        os.close();
+
+        return this;
     }
 
     // Count words in 04.wav
-    private static void countWords(){
+    private WaveProcessor countWords(int wordCount){
 
+        return this;
+    }
+
+    public int saveFile(String fileName) throws IOException {
+        File f = new File(OUT_FOLDER+fileName);
+        if(f.exists()) f.delete();
+        OutputStream os = new FileOutputStream(OUT_FOLDER+fileName);
+        os.write(wave.getHeader().getRawHeader());
+        os.write(wave.getRawData());
+        os.close();
+        return 0;
     }
 }
