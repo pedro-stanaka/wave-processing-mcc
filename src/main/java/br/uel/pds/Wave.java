@@ -17,7 +17,7 @@ public class Wave {
 
     private WaveHeader header;
     private byte[] rawData;
-    private List<Integer> dataValues;
+    private List<Double> dataValues;
 
     /**
      * @TODO documentation here
@@ -28,7 +28,7 @@ public class Wave {
         try {
             InputStream is = this.getClass().getResourceAsStream(fileName);
             this.header = new WaveHeader(is);
-            this.dataValues = new ArrayList<Integer>();
+            this.dataValues = new ArrayList<Double>();
             this.rawData = new byte[header.getSubChunk2Size()];
             is.read(rawData);
             this.readData();
@@ -53,6 +53,12 @@ public class Wave {
         }
     }
 
+    public Double[] getDataAsDouble(){
+        Double[] ret = new Double[dataValues.size()];
+        dataValues.toArray(ret);
+        return  ret;
+    }
+
     /**
      * @TODO documentation here
      */
@@ -60,7 +66,7 @@ public class Wave {
         int unsigned;
         for(int i=0; i< this.rawData.length;i+=4) {
             unsigned = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawData, i, i+4));
-            this.dataValues.add(unsigned);
+            this.dataValues.add((double) unsigned);
         }
     }
 
@@ -71,7 +77,7 @@ public class Wave {
         int unsigned;
         for(int i=0; i< this.rawData.length;i+=2) {
             unsigned = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawData, i, i+2));
-            this.dataValues.add(unsigned);
+            this.dataValues.add((double) unsigned);
         }
     }
 
@@ -82,7 +88,7 @@ public class Wave {
         int unsigned;
         for(int i=0; i< this.rawData.length; i++) {
             unsigned =  rawData[i] & 0xFF;
-            this.dataValues.add(unsigned);
+            this.dataValues.add((double) unsigned);
         }
     }
 
@@ -98,7 +104,7 @@ public class Wave {
      * @TODO documentation here
      * @return
      */
-    public List<Integer> getDataValues() {
+    public List<Double> getDataValues() {
         return dataValues;
     }
 

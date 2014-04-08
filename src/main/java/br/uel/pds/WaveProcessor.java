@@ -100,4 +100,8 @@ public class WaveProcessor {
         os.close();
         return 0;
     }
+
+    public Wave getWave() {
+        return wave;
+    }
 }

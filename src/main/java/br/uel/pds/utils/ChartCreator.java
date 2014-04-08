@@ -36,9 +36,9 @@ public class ChartCreator {
         System.out.println("end chart add");
     }
 
-    public void addValues(List<Integer> list){
+    public void addValues(List<Double> list){
         int cont=0;
-        for(Integer i : list){
+        for(Double i : list){
             this.dataSet.add(cont, i);
             cont++;
         }
