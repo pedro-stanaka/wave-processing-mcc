@@ -4,19 +4,19 @@ import br.uel.pds.transforms.FourierTransform;
 import br.uel.pds.utils.ChartCreator;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public class WaveLabs {
     public static  void main(String[] args) throws IOException {
-        String original = "/22.wav";
-//        String original = "/25_8000_8_mono.wav";
-//        String original = "/i_see_fire.wav";
-        WaveProcessor wp = new WaveProcessor(original);
-        wp.volumeChange(0.4).getWaveFormat("edited_"+original.substring(1)).saveFile("edited_"+original.substring(1));
-        applyDft();
+        halfVolume();
     }
 
+
+    public static void halfVolume() throws IOException {
+        String original = "/25_8000_8_mono.wav";
+        WaveProcessor wp = new WaveProcessor(original);
+        wp.volumeChange(0.4).getWaveFormat("edited_"+original.substring(1)).saveFile("edited_"+original.substring(1));
+    }
 
     public static void applyDft(){
         String original = "/22.wav";
