@@ -1,81 +1,30 @@
+
 package br.uel.pds.transforms;
 
+import br.uel.pds.utils.MyArrayUtils;
+import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
+import org.apache.commons.lang3.ArrayUtils;
 import java.util.Arrays;
 
 public class FourierTransform {
 
 
 
-    public Double[] FastFourierTransform(Double[] sinal, int comprimento) {
-        double tr,ti;
-        double rex[] = new double [comprimento];
-        double imx[] = new double [comprimento];
-        double ur,ui;
-        double sr,si;
-        int le,le2;
-        int ip;
-
-        double nm1 = comprimento -1;
-        int nd2 = comprimento/2;
-
-        double m = (int)(Math.log(comprimento)/Math.log(2));
-        int j = nd2;
-
-        for(int i = 0;i< comprimento-1;i++){
-            if(i<=j){
-                tr = rex[j];
-                ti = imx[j];
-                rex[j] = rex[i];
-                imx[j] = imx[i];
-                rex[i] = tr;
-                rex[i] = ti;
-            }
-
-        }
-
-        int k = nd2;
-        while(k<j){
-            j=j-k;
-            k=k/2;
-            j+=k;
-        }
-
-        for(int l = 0;l<m-1;l++){
-            le = (int)Math.pow(2, l);
-            le2= le/2;
-
-            ur=1;
-            ui=0;
-
-            sr = Math.cos(Math.PI/le2);
-            si = -Math.sin(Math.PI/le2);
-
-            for(int p =0;p<le2;p++){
-                int pm1 = p;
-                for(int i = pm1;i<nm1;i=i+le){
-                    ip = i+le2;
-                    tr = rex[ip]*ur-imx[ip]*ui;
-                    ti = rex[ip]*ui-imx[ip]*ur;
-                    rex[ip] = rex[i] - tr;
-                    imx[ip] = imx[i] -ti;
-                    rex[i] = rex[i] + tr;
-                    imx[i] = imx[i] + ti;
-                }
-
-                tr = ur;
-                ur = tr*sr - ui*si;
-                ui = tr*si - ui*sr;
-
-            }
-            for (int w = 0; w < comprimento - 1; w++) {
-                sinal[j] = Math.log10(Math.sqrt((rex[j] * rex[j]) + (imx[j] * imx[j])));
-            }
-        }
-        return sinal;
+    public double[] vfft(Double[] entry, Double[] imaginary){
+       DoubleFFT_1D dfft = new DoubleFFT_1D(entry.length);
+        System.out.println(entry.length);
+       double[] result = ArrayUtils.toPrimitive(MyArrayUtils.concatenateInsert(entry, imaginary));
+       dfft.complexForward(result);
+       return  result;
     }
 
+    public double[] iVfft(double[] a, boolean changeScale){
+        DoubleFFT_1D doubleFFT_1D = new DoubleFFT_1D(a.length-2);
+        doubleFFT_1D.complexInverse(a, changeScale);
+        return a;
+    }
 
-    public Double[] dft(Double sinal[], int comprimento) {
+    public Double[] discreteFourierTransform(Double sinal[], int comprimento) {
         double[] re = new double[comprimento];
         double[] im = new double[comprimento];
         for (int u = 0; u < comprimento - 1; u++) {
@@ -92,6 +41,99 @@ public class FourierTransform {
             sinal[j] = Math.log10(Math.sqrt((re[j] * re[j]) + (im[j] * im[j])));
         }
         return Arrays.copyOfRange(sinal, 0, comprimento);
+    }
+
+
+    public Double[] FastFourierTransform(final Double[] inputReal, Double[] inputImaginary, boolean direct) {
+
+        int inputLength = inputReal.length;
+
+        // Encontrando a potencia de 2
+        double ld = Math.log(inputLength) / Math.log(2.0);
+        if (((int) ld) - ld != 0) {
+            System.out.println("O número tem que ser uma potência de 2.");
+            return null;
+        }
+
+        int nu = (int) ld;
+        int n2 = inputLength / 2;
+        int nu1 = nu - 1;
+        double[] xReal = new double[inputLength];
+        double[] xImag = new double[inputLength];
+        double tReal, tImag, p, arg, c, s;
+
+        double constant;
+        if (direct) {
+            constant = -2 * Math.PI;
+        }
+        else {
+            constant = 2 * Math.PI;
+        }
+
+        for (int i = 0; i < inputLength; i++) {
+            xReal[i] = inputReal[i];
+            xImag[i] = inputImaginary[i];
+        }
+
+        int k = 0;
+        for (int l = 1; l <= nu; l++) {
+            while (k < inputLength) {
+                for (int i = 1; i <= n2; i++) {
+                    p = bitReverseReference(k >> nu1, nu);
+                    arg = constant * p / inputLength;
+                    c = Math.cos(arg);
+                    s = Math.sin(arg);
+                    tReal = xReal[k + n2] * c + xImag[k + n2] * s;
+                    tImag = xImag[k + n2] * c - xReal[k + n2] * s;
+                    xReal[k + n2] = xReal[k] - tReal;
+                    xImag[k + n2] = xImag[k] - tImag;
+                    xReal[k] += tReal;
+                    xImag[k] += tImag;
+                    k++;
+                }
+                k += n2;
+            }
+            k = 0;
+            nu1--;
+            n2 /= 2;
+        }
+
+        k = 0;
+        int r;
+        while (k < inputLength) {
+            r = bitReverseReference(k, nu);
+            if (r > k) {
+                tReal = xReal[k];
+                tImag = xImag[k];
+                xReal[k] = xReal[r];
+                xImag[k] = xImag[r];
+                xReal[r] = tReal;
+                xImag[r] = tImag;
+            }
+            k++;
+        }
+
+        Double[] newArray = new Double[xReal.length * 2];
+        double radice = 1 / Math.sqrt(inputLength);
+        for (int i = 0; i < newArray.length; i += 2) {
+            int i2 = i / 2;
+            newArray[i] = xReal[i2] * radice;
+            newArray[i + 1] = xImag[i2] * radice;
+        }
+        return newArray;
+    }
+
+
+    private int bitReverseReference(int j, int nu) {
+        int j2;
+        int j1 = j;
+        int k = 0;
+        for (int i = 1; i <= nu; i++) {
+            j2 = j1 / 2;
+            k = 2 * k + j1 - 2 * j2;
+            j1 = j2;
+        }
+        return k;
     }
 
 }

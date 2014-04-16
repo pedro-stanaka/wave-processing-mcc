@@ -4,7 +4,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.time.TimeSeries;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -30,17 +29,14 @@ public class ChartCreator {
     public void addValues(byte[] values){
         int cont=0;
         for (byte i : values) {
-            this.dataSet.add((double) cont, (double) i);
-            cont++;
+            this.dataSet.add((double) cont++, (double) i);
         }
-        System.out.println("end chart add");
     }
 
     public void addValues(List<Double> list){
         int cont=0;
         for(Double i : list){
-            this.dataSet.add(cont, i);
-            cont++;
+            this.dataSet.add(cont++, i);
         }
     }
 
@@ -54,4 +50,9 @@ public class ChartCreator {
     }
 
 
+    public void addValuesIntercalated(double[] values) {
+        for (int i = 0; i < values.length; i+=2) {
+            this.dataSet.add(i, values[i]);
+        }
+    }
 }
