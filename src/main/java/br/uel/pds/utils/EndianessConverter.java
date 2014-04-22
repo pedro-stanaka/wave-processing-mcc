@@ -28,7 +28,7 @@ public class EndianessConverter {
      * @param arrayLength The length of the result array
      * @return
      */
-    public static byte[] convertBigEndian(int bigEndian, int arrayLength){
+    public static byte[] convertBigEndian(Integer bigEndian, int arrayLength){
         if (bigEndian != 0){
             byte[] resp = new byte[arrayLength];
             for (int i = 0; i < arrayLength; i++) {

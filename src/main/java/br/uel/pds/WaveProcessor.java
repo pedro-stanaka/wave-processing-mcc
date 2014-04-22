@@ -1,5 +1,6 @@
 package br.uel.pds;
 
+import br.uel.pds.transforms.FourierTransform;
 import br.uel.pds.utils.ChartCreator;
 
 import java.io.File;
@@ -7,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -16,6 +18,7 @@ public class WaveProcessor {
 
     private static Wave wave;
     private final static String OUT_FOLDER = "src/main/resources/";
+    private Double[] fourierResults;
 
     public WaveProcessor(String originalFile) {
         this.wave = new Wave(originalFile);
@@ -94,6 +97,34 @@ public class WaveProcessor {
         return this;
     }
 
+    private int findNextTwoPotency(int value){ return (int) Math.pow(2, (int) (Math.log((double)value)/Math.log(2))); }
+
+    public WaveProcessor applyFft(){
+        FourierTransform dft = new FourierTransform();
+
+
+        int length = wave.getDataAsDouble().length;
+        int nextTwoPotency = findNextTwoPotency(length);
+
+        Double[] imaginary = new Double[nextTwoPotency];
+        Arrays.fill(imaginary, 0.0);
+        // Direct FFT
+        this.fourierResults = dft.FastFourierTransform(Arrays.copyOf(wave.getDataAsDouble(), nextTwoPotency), imaginary, true);
+        return this;
+    }
+
+    public WaveProcessor applyIfft(){
+        FourierTransform dft = new FourierTransform();
+        System.out.println("Tamanho vetor: " + fourierResults.length);
+        // Inverse FFT
+        fourierResults = dft.FastFourierTransform(Arrays.copyOf(fourierResults, fourierResults.length/2),
+                Arrays.copyOfRange(fourierResults, (fourierResults.length / 2), fourierResults.length),
+                false);
+        System.out.println("Fourier tamanho: "+fourierResults.length);
+        wave.setDataValues(Arrays.copyOf(fourierResults, fourierResults.length/2), true);
+        return this;
+    }
+
     public int saveFile(String fileName) throws IOException {
         File f = new File(OUT_FOLDER + fileName);
         if (f.exists()) f.delete();
@@ -104,7 +135,23 @@ public class WaveProcessor {
         return 0;
     }
 
+    public WaveProcessor plotFourier(){
+        ChartCreator cc = new ChartCreator("Wave");
+        cc.addValues(wave.getDataValues());
+        cc.createLineChart("Wave: " + "FFT", "Sample #", "Amplitude");
+        return this;
+    }
+
     public Wave getWave() {
         return wave;
+    }
+
+    public void saveFileFourierResult(String fileName) throws IOException {
+        File f = new File(OUT_FOLDER + fileName);
+        if (f.exists()) f.delete();
+        OutputStream os = new FileOutputStream(OUT_FOLDER + fileName);
+        os.write(wave.getHeader().getRawHeader());
+        os.write(wave.getRawData());
+        os.close();
     }
 }

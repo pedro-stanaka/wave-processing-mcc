@@ -31,10 +31,17 @@ public class Wave {
             this.dataValues = new ArrayList<Double>();
             this.rawData = new byte[header.getSubChunk2Size()];
             is.read(rawData);
-            this.readData();
+            readAsRaw(rawData);
+//            this.readData();
             is.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void readAsRaw(byte []data){
+        for (byte b : data) {
+            dataValues.add((double) b);
         }
     }
 
@@ -119,4 +126,25 @@ public class Wave {
     public void setHeader(WaveHeader header) {
         this.header = header;
     }
+
+    public void setDataValues(Double[] dataValues, boolean overwriteRaw) {
+        this.dataValues = Arrays.asList(dataValues);
+
+        if(overwriteRaw){
+            this.rawData = new byte[rawData.length];
+            int j = 0;
+            System.out.println(dataValues);
+            for (int i = 0; i < this.dataValues.size(); i++) {
+//                System.arraycopy(EndianessConverter.convertBigEndian(this.dataValues.get(i).intValue(), 2), 0, this.rawData, j, 2);
+//                j+=2;
+                this.rawData[i] = (byte) this.dataValues.get(i).intValue();
+            }
+        }
+    }
+
+
+//    public static void main(String args[]){
+//        Double a[] = {4, 2};
+//
+//    }
 }

@@ -14,8 +14,8 @@ public class WaveLabs {
 
     public static  void main(String[] args) throws IOException {
 //        applyDft();
-        applyVfft();
-//        applyFft();
+//        applyVfft();
+        applyFft();
     }
 
 
@@ -52,65 +52,44 @@ public class WaveLabs {
         cc.createLineChart("DFT 2048", "Freq", "Amp (Db)");
     }
 
-    private static int findNextTwoPotency(int value){ return (int) Math.pow(2, (int) (Math.log((double)value)/Math.log(2))); }
 
-    public static void applyFft(){
+
+    public static void applyFft() throws IOException {
         String original = inputFileVoice;
         WaveProcessor wp = new WaveProcessor(original);
         wp.getWaveFormat(original);
-        FourierTransform dft = new FourierTransform();
+        wp.applyFft().plotFourier().applyIfft().getWaveFormat("IFFT").saveFileFourierResult("ifft.wav");
 
-
-        int length = wp.getWave().getDataAsDouble().length;
-        int nextTwoPotency = findNextTwoPotency(length);
-
-        Double[] imaginary = new Double[nextTwoPotency];
-        Arrays.fill(imaginary, 0.0);
-        // Direct FFT
-        Double[] result = dft.FastFourierTransform(Arrays.copyOf(wp.getWave().getDataAsDouble(), nextTwoPotency), imaginary, true);
-        for (int i = 0; i < 100; i++) {
-            System.out.println(result[i]);
-        }
-        ChartCreator cc = new ChartCreator("FFT "+ nextTwoPotency);
-        cc.addValues(Arrays.asList(Arrays.copyOf(result, nextTwoPotency/2)));
-        cc.createLineChart("FFT", "Freq", "Amp (Db)");
-
-
-        // Inverse FFT
-        result = dft.FastFourierTransform(Arrays.copyOf(imaginary, findNextTwoPotency(nextTwoPotency/2)), Arrays.copyOf(wp.getWave().getDataAsDouble(), findNextTwoPotency(nextTwoPotency/2)),false);
-        ChartCreator cc2 = new ChartCreator("IFFT :"+ nextTwoPotency);
-        cc2.addValues(Arrays.asList(result));
-        cc.createLineChart("IFFT", "Freq", "Amp (Db)");
     }
-
-    public static void applyVfft(){
-        String original = inputFileVoice;
-        WaveProcessor wp = new WaveProcessor(original);
-        wp.getWaveFormat(original);
-        FourierTransform dft = new FourierTransform();
-        int length = wp.getWave().getDataAsDouble().length;
-        int nextTwoPotency = findNextTwoPotency(length);
-
-        Double[] imaginary = new Double[nextTwoPotency];
-        Arrays.fill(imaginary, 0.0);
-        double [] result = dft.vfft(Arrays.copyOf(wp.getWave().getDataAsDouble(), nextTwoPotency), imaginary);
-        double [] cr = result.clone();
-        double [] cr2 = result.clone();
-        System.out.println(result.length);
-        ChartCreator cc = new ChartCreator("VFFT :"+ nextTwoPotency);
-        cc.addValuesIntercalated(Arrays.copyOf(result, nextTwoPotency/2));
-        cc.createLineChart("VFFT", "Freq", "Amp (Db)");
-
-        System.out.println(result.length);
-        dft.iVfft(cr, false);
-        ChartCreator cc2 = new ChartCreator("IFFT (ns):"+ nextTwoPotency);
-        cc2.addValuesIntercalated(result);
-        cc2.createLineChart("IFFT (ns)", "Freq", "Amp (Db)");
-        dft.iVfft(cr2, true);
-        ChartCreator cc3 = new ChartCreator("IFFT (scaled):"+ nextTwoPotency);
-        cc3.addValuesIntercalated(result);
-        cc3.createLineChart("IFFT (scaled)", "Freq", "Amp (Db)");
-    }
+//
+//    public static void applyVfft(){
+//        String original = inputFileVoice;
+//        WaveProcessor wp = new WaveProcessor(original);
+//        wp.getWaveFormat(original);
+//        FourierTransform dft = new FourierTransform();
+//        int length = wp.getWave().getDataAsDouble().length;
+//        int nextTwoPotency = findNextTwoPotency(length);
+//
+//        Double[] imaginary = new Double[nextTwoPotency];
+//        Arrays.fill(imaginary, 0.0);
+//        double [] result = dft.vfft(Arrays.copyOf(wp.getWave().getDataAsDouble(), nextTwoPotency), imaginary);
+//        double [] cr = result.clone();
+//        double [] cr2 = result.clone();
+//        System.out.println(result.length);
+//        ChartCreator cc = new ChartCreator("VFFT :"+ nextTwoPotency);
+//        cc.addValuesIntercalated(Arrays.copyOf(result, nextTwoPotency/2));
+//        cc.createLineChart("VFFT", "Freq", "Amp (Db)");
+//
+//        System.out.println(result.length);
+//        dft.iVfft(cr, false);
+//        ChartCreator cc2 = new ChartCreator("IFFT (ns):"+ nextTwoPotency);
+//        cc2.addValuesIntercalated(result);
+//        cc2.createLineChart("IFFT (ns)", "Freq", "Amp (Db)");
+//        dft.iVfft(cr2, true);
+//        ChartCreator cc3 = new ChartCreator("IFFT (scaled):"+ nextTwoPotency);
+//        cc3.addValuesIntercalated(result);
+//        cc3.createLineChart("IFFT (scaled)", "Freq", "Amp (Db)");
+//    }
 
 
 }

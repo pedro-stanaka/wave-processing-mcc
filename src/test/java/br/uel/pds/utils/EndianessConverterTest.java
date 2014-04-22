@@ -14,15 +14,20 @@ public class EndianessConverterTest extends TestCase {
 
     byte[] byte8000;
     byte[] byte8;
+    byte[] byten2;
     int i8000;
     int i8;
+    int ni2;
 
     @Before
     public void setUp() throws Exception {
         byte8000 = new byte[]{64, 31, 0, 0};
         byte8 = new byte[]{8,0};
+        byten2 = new byte[]{-2, -1, -1, -1};
+
         i8 = 8;
         i8000 = 8000;
+        ni2 = -2;
     }
 
     @After
@@ -40,5 +45,6 @@ public class EndianessConverterTest extends TestCase {
     public void testConvertBigEndian() throws Exception {
         assertThat(byte8000, is(EndianessConverter.convertBigEndian(i8000,4)));
         assertThat(byte8, is(EndianessConverter.convertBigEndian(i8,2)));
+        assertThat(EndianessConverter.convertBigEndian(ni2, 4), is(byten2));
     }
 }
