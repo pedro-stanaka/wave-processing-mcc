@@ -1,11 +1,12 @@
 package br.uel.pds;
 
-import br.uel.pds.utils.EndianessConverter;
+import com.google.common.io.LittleEndianDataInputStream;
+import com.google.common.io.LittleEndianDataOutputStream;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 
 /**
@@ -16,8 +17,10 @@ import java.util.List;
 public class Wave {
 
     private WaveHeader header;
+    private double[] dataValues;
     private byte[] rawData;
-    private List<Double> dataValues;
+    private LittleEndianDataInputStream stream;
+    private int dataSize;
 
     /**
      * @TODO documentation here
@@ -28,90 +31,72 @@ public class Wave {
         try {
             InputStream is = this.getClass().getResourceAsStream(fileName);
             this.header = new WaveHeader(is);
-            this.dataValues = new ArrayList<Double>();
-            this.rawData = new byte[header.getSubChunk2Size()];
-            is.read(rawData);
-            readAsRaw(rawData);
-//            this.readData();
+            if(is.markSupported()){
+                is.mark(this.header.getSubChunk2Size()+2);
+            }
+            this.stream = new LittleEndianDataInputStream(is);
+            this.readData();
+            if(is.markSupported()){
+                try {
+                    is.reset();
+                    this.rawData = new byte[this.header.getSubChunk2Size()];
+                    is.read(this.rawData);
+                } catch (IOException ioe){
+                    ioe.printStackTrace();
+                }
+            }
+            stream.close();
             is.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void readAsRaw(byte []data){
-        for (byte b : data) {
-            dataValues.add((double) b);
+    /**
+     * @TODO documentation here
+     */
+    private void readData() throws IOException {
+        this.setDataValues(new double[this.header.getSubChunk2Size() / (this.header.getBytesPerSample())]);
+        switch (this.header.getBytesPerSample()) {
+            case 1: this._readData8bits(); break;
+            case 2: this._readData16bits(); break;
+            case 4: this._readData32bits(); break;
         }
     }
 
     /**
      * @TODO documentation here
      */
-    private void readData() {
-        if(this.header.getBitsPerSample() == 16){
-            if (this.header.getBlockAlign() == 2){
-                this._readData32bits();
-            }else {
-                this._readData16bits();
-            }
-        }else{
-            this._readData8bits();
-        }
-    }
-
-    public Double[] getDataAsDouble(){
-        Double[] ret = new Double[dataValues.size()];
-        dataValues.toArray(ret);
-        return  ret;
-    }
-
-    /**
-     * @TODO documentation here
-     */
-    private void _readData32bits() {
-        int unsigned;
-        for(int i=0; i< this.rawData.length;i+=4) {
-            unsigned = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawData, i, i+4));
-            this.dataValues.add((double) unsigned);
+    private void _readData32bits() throws IOException {
+        for(int i=0; i< this.getDataValues().length; i++) {
+            this.getDataValues()[i] = stream.readInt();
         }
     }
 
     /**
      * @TODO documentation here
      */
-    private void _readData16bits(){
-        int unsigned;
-        for(int i=0; i< this.rawData.length;i+=2) {
-            unsigned = EndianessConverter.convertLittleEndian(Arrays.copyOfRange(this.rawData, i, i+2));
-            this.dataValues.add((double) unsigned);
+    private void _readData16bits() throws IOException {
+        for(int i=0; i< this.getDataValues().length; i++) {
+            this.getDataValues()[i] = stream.readShort();
         }
     }
 
     /**
      * @TODO documentation here
      */
-    private void _readData8bits() {
-        int unsigned;
-        for(int i=0; i< this.rawData.length; i++) {
-            unsigned =  rawData[i] & 0xFF;
-            this.dataValues.add((double) unsigned);
+    private void _readData8bits() throws IOException {
+        for(int i=0; i< this.getDataValues().length; i++) {
+            this.getDataValues()[i] = stream.readByte();
         }
     }
+
 
     /**
      * @TODO documentation here
      * @return
      */
-    public byte[] getRawData() {
-        return rawData;
-    }
-
-    /**
-     * @TODO documentation here
-     * @return
-     */
-    public List<Double> getDataValues() {
+    public double[] getDataValues() {
         return dataValues;
     }
 
@@ -127,24 +112,76 @@ public class Wave {
         this.header = header;
     }
 
-    public void setDataValues(Double[] dataValues, boolean overwriteRaw) {
-        this.dataValues = Arrays.asList(dataValues);
+    public void saveFile(double[] values, String fileName) {
+        int bytesPerSample = header.getBytesPerSample();
 
-        if(overwriteRaw){
-            this.rawData = new byte[rawData.length];
-            int j = 0;
-            System.out.println(dataValues);
-            for (int i = 0; i < this.dataValues.size(); i++) {
-//                System.arraycopy(EndianessConverter.convertBigEndian(this.dataValues.get(i).intValue(), 2), 0, this.rawData, j, 2);
-//                j+=2;
-                this.rawData[i] = (byte) this.dataValues.get(i).intValue();
-            }
+        try {
+            File f = new File(fileName);
+            if(f.exists())f.delete();
+
+            FileOutputStream fos = new FileOutputStream(fileName);
+            fos.write(header.getRawHeader());
+            LittleEndianDataOutputStream outputStream = new LittleEndianDataOutputStream(fos);
+            write(values, bytesPerSample, outputStream);
+            outputStream.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
     }
 
+    private void write(double[] values, int bytesPerSample, LittleEndianDataOutputStream outputStream) throws IOException {
 
-//    public static void main(String args[]){
-//        Double a[] = {4, 2};
-//
-//    }
+        int normalizedNum;
+//        System.out.print("\n\n[");
+        switch (bytesPerSample){
+            case 1:
+                for (double value : values) {
+
+                    normalizedNum = normalizeNumber(value, Byte.MAX_VALUE, Byte.MIN_VALUE);
+                    outputStream.writeByte(normalizedNum);
+                    System.out.print(normalizedNum+", ");
+                }
+                break;
+            case 2:
+                for (double value : values) {
+//                    System.out.print("v"+value+", ");
+                    normalizedNum = normalizeNumber(value, Short.MAX_VALUE, Short.MIN_VALUE);
+                    outputStream.writeShort(normalizedNum);
+//                    System.out.print(normalizedNum+", ");
+                }
+                break;
+            case 4:
+                for (double value : values) {
+                    normalizedNum = normalizeNumber(value, Integer.MAX_VALUE, Integer.MIN_VALUE);
+                    outputStream.writeInt(normalizedNum);
+//                    System.out.print(normalizedNum+", ");
+                }
+                break;
+        }
+//        System.out.print("]\n\n");
+    }
+
+    private int normalizeNumber(double value, int upperBound, int lowerBound) {
+        int normalizedNumber = (int) value;
+
+        if (value > upperBound) {
+            normalizedNumber = upperBound;
+        }
+
+        if (value < lowerBound) {
+            normalizedNumber = lowerBound;
+        }
+
+        return normalizedNumber;
+    }
+
+    public void setDataValues(double[] dataValues) {
+        this.dataValues = dataValues;
+    }
+
+    public byte[] getRawData() {
+        return rawData;
+    }
 }
