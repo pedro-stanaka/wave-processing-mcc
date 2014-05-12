@@ -57,4 +57,14 @@ public class ChartCreator {
     }
 
 
+    public void addValues(double[] values) {
+        int cont=0;
+        for(double i : values){
+            this.dataSet.add(cont++, i);
+        }
+    }
+
+    public void addValue(int y, int x) {
+        this.dataSet.add(x, y);
+    }
 }

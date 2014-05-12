@@ -25,4 +25,18 @@ public class MyArrayUtils {
         }
         return result;
     }
+
+    public static  double[] concatenateInsert(double[] firstArray, double[] secondArray){
+        double[] result = null;
+        if(firstArray.length != secondArray.length){
+            throw new IllegalArgumentException("The given arrays must have the same size/length.");
+        }else{
+            result = new double[firstArray.length * 2];
+            for (int i = 0, j = 0; i < firstArray.length; i++, j+=2) {
+                result[j] = firstArray[i];
+                result[j+1] = secondArray[i];
+            }
+        }
+        return result;
+    }
 }
