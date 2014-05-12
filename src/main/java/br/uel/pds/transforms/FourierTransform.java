@@ -3,17 +3,17 @@ package br.uel.pds.transforms;
 
 import br.uel.pds.utils.MyArrayUtils;
 import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
-import org.apache.commons.lang3.ArrayUtils;
+
 import java.util.Arrays;
 
 public class FourierTransform {
 
 
 
-    public double[] vfft(Double[] entry, Double[] imaginary){
+    public double[] vfft(double[] entry, double[] imaginary){
        DoubleFFT_1D dfft = new DoubleFFT_1D(entry.length);
         System.out.println(entry.length);
-       double[] result = ArrayUtils.toPrimitive(MyArrayUtils.concatenateInsert(entry, imaginary));
+       double[] result = MyArrayUtils.concatenateInsert(entry, imaginary);
        dfft.complexForward(result);
        return  result;
     }
@@ -21,10 +21,22 @@ public class FourierTransform {
     public double[] iVfft(double[] a, boolean changeScale){
         DoubleFFT_1D doubleFFT_1D = new DoubleFFT_1D(a.length-2);
         doubleFFT_1D.complexInverse(a, changeScale);
-        return a;
+        return extractReal(a);
     }
 
-    public Double[] discreteFourierTransform(Double sinal[], int comprimento) {
+
+    public double[] extractReal(double[] data){
+        double[] ret = new double[data.length/2];
+        int j = 0;
+        for (int i = 0; i < data.length; i++) {
+            if(i%2==0){
+                ret[j++] = data[i];
+            }
+        }
+        return ret;
+    }
+
+    public double[] discreteFourierTransform(double[] sinal, int comprimento) {
         double[] re = new double[comprimento];
         double[] im = new double[comprimento];
         for (int u = 0; u < comprimento - 1; u++) {
@@ -44,7 +56,7 @@ public class FourierTransform {
     }
 
 
-    public Double[] FastFourierTransform(final Double[] inputReal, Double[] inputImaginary, boolean direct) {
+    public double[] fastFourierTransform(final double[] inputReal, double[] inputImaginary, boolean direct) {
 
         int inputLength = inputReal.length;
 
@@ -113,7 +125,7 @@ public class FourierTransform {
             k++;
         }
 
-        Double[] newArray = new Double[xReal.length * 2];
+        double[] newArray = new double[xReal.length * 2];
         double radice = 1 / Math.sqrt(inputLength);
         for (int i = 0; i < newArray.length; i += 2) {
             int i2 = i / 2;
