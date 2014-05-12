@@ -3,10 +3,7 @@ package br.uel.pds;
 import br.uel.pds.transforms.FourierTransform;
 import br.uel.pds.utils.ChartCreator;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,42 +13,29 @@ import java.util.List;
  */
 public class WaveProcessor {
 
-    private static Wave wave;
-    private final static String OUT_FOLDER = "src/main/resources/";
-    private Double[] fourierResults;
-
-    public WaveProcessor(String originalFile) {
-        this.wave = new Wave(originalFile);
-    }
-
-    public WaveProcessor getWaveFormat(String filename) {
-        ChartCreator cc = new ChartCreator("Wave");
-        cc.addValues(wave.getDataValues());
-        cc.createLineChart("Wave: " + filename, "Sample #", "Amplitude");
-        return this;
-    }
 
 
     /**
      * @param factor
      * @throws IOException
      */
-    public WaveProcessor volumeChange(double factor) throws IOException {
-        for (int i = 0; i < wave.getRawData().length; i++) {
-            wave.getRawData()[i] = (byte) (wave.getRawData()[i] * factor);
+    public double[] volumeChange(double[] data, double factor) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (data[i] * factor);
         }
-        return this;
+        return data;
     }
 
     // Resample 25_8000_8_mono.wav in order to reduce its size to 1mb
 
     /**
+     * @param wave Wave instance
      * @param samplingFactor An positive integer greater than one. Should not be very big, otherwise aliasing
      * @return WaveProcessor The instance of this class (this).
      * @TODO documentation here
      * @todo Create an alternative way to downsample in order to avoid aliasing
      */
-    public WaveProcessor downSample(int samplingFactor) throws IOException {
+    public WaveProcessor downSample(Wave wave, int samplingFactor) throws IOException {
         WaveHeader h = wave.getHeader();
 
         h.setSampleRate(wave.getHeader().getSampleRate() / samplingFactor);
@@ -70,7 +54,7 @@ public class WaveProcessor {
     }
 
     // Apply fadeIn fadeOut in 25_4100_16_mono.wav
-    public WaveProcessor fadeEfx(int sec) throws IOException {
+    public WaveProcessor fadeEfx(Wave wave, int sec) throws IOException {
         int numberOfSamples = wave.getHeader().getByteRate() * sec;
 
         double factor = 0, step = 1.0 / (double) sec;
@@ -93,65 +77,85 @@ public class WaveProcessor {
 
     // Count words in 04.wav
     public WaveProcessor countWords(int wordCount) {
-
         return this;
     }
 
-    private int findNextTwoPotency(int value){ return (int) Math.pow(2, (int) (Math.log((double)value)/Math.log(2))); }
+    public int findNextTwoPotency(int value){ return (int) Math.pow(2, (int) (Math.log((double)value)/Math.log(2))); }
 
-    public WaveProcessor applyFft(){
+    public double[] applyFft(double[] values){
         FourierTransform dft = new FourierTransform();
 
-
-        int length = wave.getDataAsDouble().length;
-        int nextTwoPotency = findNextTwoPotency(length);
-
-        Double[] imaginary = new Double[nextTwoPotency];
+        int nextTwoPotency = findNextTwoPotency(values.length);
+        double[] imaginary = new double[nextTwoPotency];
         Arrays.fill(imaginary, 0.0);
         // Direct FFT
-        this.fourierResults = dft.FastFourierTransform(Arrays.copyOf(wave.getDataAsDouble(), nextTwoPotency), imaginary, true);
-        return this;
+        return dft.fastFourierTransform(Arrays.copyOf(values, nextTwoPotency), imaginary, true);
     }
 
-    public WaveProcessor applyIfft(){
+    public double[] applyIfft(double[] fftValues){
+
         FourierTransform dft = new FourierTransform();
-        System.out.println("Tamanho vetor: " + fourierResults.length);
         // Inverse FFT
-        fourierResults = dft.FastFourierTransform(Arrays.copyOf(fourierResults, fourierResults.length/2),
-                Arrays.copyOfRange(fourierResults, (fourierResults.length / 2), fourierResults.length),
+        return dft.fastFourierTransform(Arrays.copyOf(fftValues, fftValues.length / 2),
+                Arrays.copyOfRange(fftValues, (fftValues.length / 2), fftValues.length),
                 false);
-        System.out.println("Fourier tamanho: "+fourierResults.length);
-        wave.setDataValues(Arrays.copyOf(fourierResults, fourierResults.length/2), true);
-        return this;
     }
 
-    public int saveFile(String fileName) throws IOException {
-        File f = new File(OUT_FOLDER + fileName);
-        if (f.exists()) f.delete();
-        OutputStream os = new FileOutputStream(OUT_FOLDER + fileName);
-        os.write(wave.getHeader().getRawHeader());
-        os.write(wave.getRawData());
-        os.close();
-        return 0;
+    public void plotWave(double[] data, String title, String xTitle, String yTitle){
+        ChartCreator cc = new ChartCreator(title);
+        cc.addValues(data);
+        cc.createLineChart(title, xTitle, yTitle);
     }
 
-    public WaveProcessor plotFourier(){
-        ChartCreator cc = new ChartCreator("Wave");
-        cc.addValues(wave.getDataValues());
-        cc.createLineChart("Wave: " + "FFT", "Sample #", "Amplitude");
-        return this;
+    public double getWaveEnergy(double[] data){
+        double waveEnergy = 0.0;
+        for (int i = 0; i < data.length; i++) {
+            waveEnergy += Math.pow(data[i], 2.0);
+        }
+        return waveEnergy;
     }
 
-    public Wave getWave() {
-        return wave;
+    public double[] mirrorReal(double[] real){
+        int j = 0;
+        double[] mirror = new double[real.length];
+        for (int i = real.length - 1; i >= 0; i--) {
+            mirror[j] = real[i];
+        }
+        return real;
     }
 
-    public void saveFileFourierResult(String fileName) throws IOException {
-        File f = new File(OUT_FOLDER + fileName);
-        if (f.exists()) f.delete();
-        OutputStream os = new FileOutputStream(OUT_FOLDER + fileName);
-        os.write(wave.getHeader().getRawHeader());
-        os.write(wave.getRawData());
-        os.close();
+    public static int findSampleFromSampleRate(int dataLength, int sampleRate, int desiredFreq){
+        return ((desiredFreq*dataLength)/(sampleRate/2));
     }
+
+
+    /** Filters **/
+
+    public double[] lowPassFilter(double[] freqValues, int cutThreshold){
+        double[] result = Arrays.copyOf(freqValues, freqValues.length);
+        Arrays.fill(result, cutThreshold, freqValues.length, 0.0);
+        return result;
+    }
+
+    public double[] highPassFilter(double[] freqValues, int cutThreshold){
+        double[] result = freqValues.clone();
+        Arrays.fill(result, 0, cutThreshold, 0.0);
+        return result;
+    }
+
+
+    public double[] bandPassFilter(double[] freqValues, int bandBegin, int bandEnd){
+        double[] result = Arrays.copyOf(freqValues, freqValues.length);
+        Arrays.fill(result, 0, bandBegin, 0.0);
+        Arrays.fill(result, bandEnd, freqValues.length, 0.0);
+        return result;
+    }
+
+
+    public double[] bandRejectFilter(double[] freqValues, int bandBegin, int bandEnd){
+        double[] result = Arrays.copyOf(freqValues, freqValues.length);
+        Arrays.fill(result, bandBegin, bandEnd, 0.0);
+        return result;
+    }
+
 }

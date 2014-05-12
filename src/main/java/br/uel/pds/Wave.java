@@ -120,6 +120,9 @@ public class Wave {
             if(f.exists())f.delete();
 
             FileOutputStream fos = new FileOutputStream(fileName);
+
+            int subChunk2Size = values.length * bytesPerSample;
+            this.header.setSubChunk2Size(subChunk2Size);
             fos.write(header.getRawHeader());
             LittleEndianDataOutputStream outputStream = new LittleEndianDataOutputStream(fos);
             write(values, bytesPerSample, outputStream);
@@ -132,9 +135,7 @@ public class Wave {
     }
 
     private void write(double[] values, int bytesPerSample, LittleEndianDataOutputStream outputStream) throws IOException {
-
         int normalizedNum;
-//        System.out.print("\n\n[");
         switch (bytesPerSample){
             case 1:
                 for (double value : values) {
@@ -146,21 +147,17 @@ public class Wave {
                 break;
             case 2:
                 for (double value : values) {
-//                    System.out.print("v"+value+", ");
                     normalizedNum = normalizeNumber(value, Short.MAX_VALUE, Short.MIN_VALUE);
                     outputStream.writeShort(normalizedNum);
-//                    System.out.print(normalizedNum+", ");
                 }
                 break;
             case 4:
                 for (double value : values) {
                     normalizedNum = normalizeNumber(value, Integer.MAX_VALUE, Integer.MIN_VALUE);
                     outputStream.writeInt(normalizedNum);
-//                    System.out.print(normalizedNum+", ");
                 }
                 break;
         }
-//        System.out.print("]\n\n");
     }
 
     private int normalizeNumber(double value, int upperBound, int lowerBound) {

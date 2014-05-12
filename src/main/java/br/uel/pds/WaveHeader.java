@@ -4,8 +4,6 @@ import br.uel.pds.utils.EndianessConverter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -227,6 +225,7 @@ public class WaveHeader {
         System.arraycopy(b, 0, rawHeader, 28, b.length);
     }
 
+
     public void setBitsPerSample(int bitsPerSample) {
         this.bitsPerSample = bitsPerSample;
         byte[] b = EndianessConverter.convertBigEndian(bitsPerSample,2);
@@ -235,11 +234,17 @@ public class WaveHeader {
 
     public void setSubChunk2Size(int subChunk2Size) {
         this.subChunk2Size = subChunk2Size;
+        byte[] b = EndianessConverter.convertBigEndian(subChunk2Size,4);
+        System.arraycopy(b, 0, rawHeader, 40, b.length);
     }
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
-        byte[] b = EndianessConverter.convertBigEndian(bitsPerSample,4);
-        System.arraycopy(b, 0, rawHeader, 34, b.length);
+        byte[] b = EndianessConverter.convertBigEndian(chunkSize,4);
+        System.arraycopy(b, 0, rawHeader, 4, b.length);
+    }
+
+    public int getBytesPerSample() {
+        return this.getBitsPerSample() / 8;
     }
 }
